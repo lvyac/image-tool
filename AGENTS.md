@@ -18,7 +18,7 @@
 ## 常用命令（项目根目录）
 
 - `pnpm install` / `pnpm tauri dev` / `pnpm tauri build`
-- Rust 侧改动提交前：`cd src-tauri && cargo fmt && cargo clippy && cargo test`（`cargo test` 含 3 个 image_ops 单元测试）
+- Rust 侧改动提交前：`cd src-tauri && cargo fmt && cargo clippy && cargo test`（`cargo test` 含 4 个 image_ops 单元测试）
 - 前端单独构建检查：`pnpm build`（tsc + vite）
 
 ## 发布构建

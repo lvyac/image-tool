@@ -1,5 +1,3 @@
-use std::fs::File;
-use std::io::BufWriter;
 use std::path::{Path, PathBuf};
 
 use ab_glyph::{FontVec, PxScale};
@@ -109,22 +107,22 @@ fn save_rgba(img: &RgbaImage, path: &Path, quality: u8) -> Result<(), String> {
         .and_then(|e| e.to_str())
         .map(|e| e.to_lowercase())
         .unwrap_or_else(|| "png".into());
-    let file = File::create(path).map_err(|e| format!("无法创建文件 {}：{e}", path.display()))?;
-    let mut writer = BufWriter::new(file);
+    let mut buf: Vec<u8> = Vec::new();
 
     match ext.as_str() {
         "jpg" | "jpeg" => {
-            let enc = JpegEncoder::new_with_quality(&mut writer, quality);
-            enc.write_image(
-                img.as_raw(),
-                img.width(),
-                img.height(),
-                image::ExtendedColorType::Rgba8,
-            )
-            .map_err(|e| format!("JPEG 编码失败：{e}"))?;
+            let rgb = rgba_to_rgb_white(img);
+            JpegEncoder::new_with_quality(&mut buf, quality)
+                .write_image(
+                    rgb.as_raw(),
+                    rgb.width(),
+                    rgb.height(),
+                    image::ExtendedColorType::Rgb8,
+                )
+                .map_err(|e| format!("JPEG 编码失败：{e}"))?;
         }
         "webp" => {
-            WebPEncoder::new_lossless(&mut writer)
+            WebPEncoder::new_lossless(&mut buf)
                 .encode(
                     img.as_raw(),
                     img.width(),
@@ -134,27 +132,29 @@ fn save_rgba(img: &RgbaImage, path: &Path, quality: u8) -> Result<(), String> {
                 .map_err(|e| format!("WebP 编码失败：{e}"))?;
         }
         "bmp" => {
-            let enc = BmpEncoder::new(&mut writer);
-            enc.write_image(
-                img.as_raw(),
-                img.width(),
-                img.height(),
-                image::ExtendedColorType::Rgba8,
-            )
-            .map_err(|e| format!("BMP 编码失败：{e}"))?;
+            let rgb = rgba_to_rgb_white(img);
+            BmpEncoder::new(&mut buf)
+                .write_image(
+                    rgb.as_raw(),
+                    rgb.width(),
+                    rgb.height(),
+                    image::ExtendedColorType::Rgb8,
+                )
+                .map_err(|e| format!("BMP 编码失败：{e}"))?;
         }
         _ => {
-            let enc = PngEncoder::new(&mut writer);
-            enc.write_image(
-                img.as_raw(),
-                img.width(),
-                img.height(),
-                image::ExtendedColorType::Rgba8,
-            )
-            .map_err(|e| format!("PNG 编码失败：{e}"))?;
+            PngEncoder::new(&mut buf)
+                .write_image(
+                    img.as_raw(),
+                    img.width(),
+                    img.height(),
+                    image::ExtendedColorType::Rgba8,
+                )
+                .map_err(|e| format!("PNG 编码失败：{e}"))?;
         }
     }
-    Ok(())
+
+    std::fs::write(path, &buf).map_err(|e| format!("无法写入文件 {}：{e}", path.display()))
 }
 
 fn rgba_to_rgb_white(img: &RgbaImage) -> image::RgbImage {
@@ -172,16 +172,16 @@ fn rgba_to_rgb_white(img: &RgbaImage) -> image::RgbImage {
 }
 
 fn save_rgb(img: &image::RgbImage, path: &Path, quality: u8) -> Result<(), String> {
-    let file = File::create(path).map_err(|e| format!("无法创建文件 {}：{e}", path.display()))?;
-    let mut writer = BufWriter::new(file);
-    let enc = JpegEncoder::new_with_quality(&mut writer, quality);
-    enc.write_image(
-        img.as_raw(),
-        img.width(),
-        img.height(),
-        image::ExtendedColorType::Rgb8,
-    )
-    .map_err(|e| format!("JPEG 编码失败：{e}"))
+    let mut buf: Vec<u8> = Vec::new();
+    JpegEncoder::new_with_quality(&mut buf, quality)
+        .write_image(
+            img.as_raw(),
+            img.width(),
+            img.height(),
+            image::ExtendedColorType::Rgb8,
+        )
+        .map_err(|e| format!("JPEG 编码失败：{e}"))?;
+    std::fs::write(path, &buf).map_err(|e| format!("无法写入文件 {}：{e}", path.display()))
 }
 
 fn draw_text(
@@ -367,6 +367,47 @@ mod tests {
         let path = dir.join("source.png");
         img.save(&path).unwrap();
         path
+    }
+
+    fn make_test_jpg(dir: &Path) -> PathBuf {
+        let mut img = RgbaImage::new(200, 150);
+        for p in img.pixels_mut() {
+            *p = Rgba([0, 128, 255, 255]);
+        }
+        let path = dir.join("source.jpg");
+        image::DynamicImage::ImageRgba8(img)
+            .to_rgb8()
+            .save(&path)
+            .unwrap();
+        path
+    }
+
+    #[test]
+    fn watermark_jpeg_output_is_valid() {
+        let dir = tmp_dir();
+        let src = make_test_jpg(&dir);
+        let opts = WatermarkOptions {
+            files: vec![src.display().to_string()],
+            output_dir: dir.display().to_string(),
+            text: "水印".into(),
+            font_size: 30.0,
+            color: "#ffffff".into(),
+            opacity: 0.7,
+            position: "se".into(),
+            margin: 10,
+            tile: false,
+            spacing: 0,
+        };
+        let out = add_watermark_to_files(&opts, |_, _, _| {}).unwrap();
+        let path = Path::new(&out[0]);
+        assert!(path.exists());
+        assert!(
+            std::fs::metadata(path).unwrap().len() > 0,
+            "输出文件不应为空"
+        );
+        let saved = image::open(path).unwrap();
+        assert_eq!((saved.width(), saved.height()), (200, 150));
+        std::fs::remove_dir_all(&dir).unwrap();
     }
 
     #[test]
