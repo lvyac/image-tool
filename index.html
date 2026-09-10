@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>图片工具</title>
+    <script type="module" src="/src/main.ts" defer></script>
+  </head>
+
+  <body>
+    <main class="app">
+      <header class="app-header">
+        <h1>图片工具</h1>
+        <nav class="tabs">
+          <button id="tab-watermark" class="tab active" data-tab="watermark">批量加水印</button>
+          <button id="tab-compress" class="tab" data-tab="compress">压缩画质</button>
+        </nav>
+      </header>
+
+      <!-- 加水印 -->
+      <section id="panel-watermark" class="panel active">
+        <div class="card">
+          <div class="field">
+            <label>选择图片</label>
+            <div class="row">
+              <button id="wm-pick">选择图片…</button>
+              <span id="wm-count" class="hint">未选择</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="wm-text">水印文字</label>
+            <input id="wm-text" type="text" placeholder="请输入水印内容" value="图片工具" />
+          </div>
+
+          <div class="field-grid">
+            <div class="field">
+              <label for="wm-size">字号 <span id="wm-size-val" class="val">60</span></label>
+              <input id="wm-size" type="range" min="10" max="200" value="60" />
+            </div>
+            <div class="field">
+              <label for="wm-opacity">不透明度 <span id="wm-opacity-val" class="val">60%</span></label>
+              <input id="wm-opacity" type="range" min="5" max="100" value="60" />
+            </div>
+            <div class="field">
+              <label for="wm-margin">边距 <span id="wm-margin-val" class="val">20</span></label>
+              <input id="wm-margin" type="range" min="0" max="200" value="20" />
+            </div>
+            <div class="field">
+              <label for="wm-color">颜色</label>
+              <input id="wm-color" type="color" value="#ffffff" />
+            </div>
+          </div>
+
+          <div class="field-grid">
+            <div class="field">
+              <label for="wm-position">位置</label>
+              <select id="wm-position">
+                <option value="nw">左上</option>
+                <option value="n">上方居中</option>
+                <option value="ne">右上</option>
+                <option value="w">左侧居中</option>
+                <option value="c" selected>居中</option>
+                <option value="e">右侧居中</option>
+                <option value="sw">左下</option>
+                <option value="s">下方居中</option>
+                <option value="se">右下</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="check">
+                <input id="wm-tile" type="checkbox" />
+                平铺水印
+              </label>
+              <div id="wm-spacing-wrap" class="hidden">
+                <label for="wm-spacing">间距 <span id="wm-spacing-val" class="val">80</span></label>
+                <input id="wm-spacing" type="range" min="0" max="300" value="80" />
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="wm-output">输出目录</label>
+            <div class="row">
+              <input id="wm-output" type="text" placeholder="留空则保存到原图所在目录" />
+              <button id="wm-output-pick">选择…</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="wm-start" class="primary">开始添加水印</button>
+        </div>
+      </section>
+
+      <!-- 压缩画质 -->
+      <section id="panel-compress" class="panel">
+        <div class="card">
+          <div class="field">
+            <label>选择图片</label>
+            <div class="row">
+              <button id="cp-pick">选择图片…</button>
+              <span id="cp-count" class="hint">未选择</span>
+            </div>
+          </div>
+
+          <div class="field-grid">
+            <div class="field">
+              <label for="cp-quality">质量 <span id="cp-quality-val" class="val">80</span></label>
+              <input id="cp-quality" type="range" min="1" max="100" value="80" />
+            </div>
+            <div class="field">
+              <label for="cp-format">输出格式</label>
+              <select id="cp-format">
+                <option value="jpeg" selected>JPEG（统一转 JPG）</option>
+                <option value="original">保持原格式</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="cp-output">输出目录</label>
+            <div class="row">
+              <input id="cp-output" type="text" placeholder="留空则保存到原图所在目录" />
+              <button id="cp-output-pick">选择…</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="cp-start" class="primary">开始压缩</button>
+        </div>
+      </section>
+
+      <footer id="status" class="status hidden">
+        <div class="progress-row">
+          <div id="progress-bar" class="progress-bar"></div>
+        </div>
+        <span id="status-text"></span>
+      </footer>
+    </main>
+  </body>
+</html>
