@@ -21,6 +21,11 @@
 - Rust 侧改动提交前：`cd src-tauri && cargo fmt && cargo clippy && cargo test`（`cargo test` 含 3 个 image_ops 单元测试）
 - 前端单独构建检查：`pnpm build`（tsc + vite）
 
+## 发布构建
+
+- 本地 macOS 只能构建 macOS 安装包；Windows 安装包由 GitHub Actions 构建（`.github/workflows/build.yml`，push main 或手动触发，产物在 Actions 的 artifacts 里）。
+- 不要尝试在 macOS 上交叉编译 Windows 版（Tauri 官方不支持，易失败）。
+
 ## 磁盘注意
 
 - 项目位于 30GB 移动盘 `/Volumes/SSD`，曾因空间耗尽构建失败（`No space left on device`）。
